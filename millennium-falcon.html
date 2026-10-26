@@ -844,12 +844,12 @@ gltfLoader.load(
         ['eng', [1.3, -0.9, -50  ], [1.3, -0.9,  -0.5 ]],  // starboard engine face
         ['hdr', [0,   0.3,  -50  ], [0,    0.3,  -0.5 ]],  // aft centre
         // Phase 3 — camera is elevated above-starboard so top AND starboard are visible
-        ['cpt', [50,  0.3,   2.5 ], [0,    0.3,   2.5 ]],  // cockpit tube — from far starboard, forward Z
-        ['dsh', [-1.64, 50,  0.5 ], [-1.64, 0,    0.5 ]],  // sensor dish — straight down onto port-top
-        ['shd', [1.5,  50,   1.0 ], [1.5,  0,     1.0 ]],  // hull emitter — straight down, centre-fwd hull top
+        ['cpt', [50,  -0.2,  2.5 ], [2.0, -0.2,   2.5 ]],  // cockpit tube — horizontal from starboard at tube height
+        ['dsh', [-1.64,50,   0.5 ], [-1.64,-5,    0.5 ]],  // sensor dish — straight down onto port-top
+        ['shd', [1.5,  50,   1.0 ], [1.5,  -5,    1.0 ]],  // hull emitter — straight down, centre-fwd hull top
         // Phase 4
-        ['hul', [2.5,  50,   0   ], [2.5,  0,     0   ]],  // hull top starboard
-        ['rmp', [0,   -50,   1.5 ], [0,    0,     1.5 ]],  // boarding ramp underside
+        ['hul', [2.5,  50,   0   ], [2.5,  -5,    0   ]],  // hull top starboard
+        ['rmp', [0,   -50,   1.5 ], [0,     5,    1.5 ]],  // boarding ramp underside
         // Phase 5
         ['trt', [0,    50,  -0.5 ], [0,    0,    -0.5 ]],  // top turret
         ['str', [2.0,  50,   1.5 ], [2.0,  0,     1.5 ]],  // stripe area
@@ -888,11 +888,11 @@ const PINS = [
   { id:'blk', label:'Structural Hull Ring',   phase:1, pos:[3.5,  0,    0   ], flip:true  },
   { id:'eng', label:'Ion Engines',            phase:2, pos:[1.3, -0.9, -2.8 ], flip:false },
   { id:'hdr', label:'Class 0.5 Hyperdrive',  phase:2, pos:[0,    0.3, -4.3 ], flip:true  },
-  { id:'cpt', label:'Cockpit Access Tube',   phase:3, pos:[3.5,  0.3,  2.5 ], flip:true  },
-  { id:'dsh', label:'Sensor Array Dish',     phase:3, pos:[-1.64,1.0,  0.5 ], flip:false },
-  { id:'shd', label:'Hull Deflector Emitter',phase:3, pos:[1.5,  1.0,  1.0 ], flip:true  },
-  { id:'hul', label:'Durasteel Hull Plate',  phase:4, pos:[2.5,  1.0,  0   ], flip:false },
-  { id:'rmp', label:'Boarding Ramp',         phase:4, pos:[0,   -1.0,  1.5 ], flip:false },
+  { id:'cpt', label:'Cockpit Access Tube',   phase:3, pos:[3.5, -0.4,  2.5 ], flip:true  },
+  { id:'dsh', label:'Sensor Array Dish',     phase:3, pos:[-1.64,0.80, 0.5 ], flip:false },
+  { id:'shd', label:'Hull Deflector Emitter',phase:3, pos:[1.5,  0.70, 1.0 ], flip:true  },
+  { id:'hul', label:'Durasteel Hull Plate',  phase:4, pos:[2.5,  0.70, 0   ], flip:false },
+  { id:'rmp', label:'Boarding Ramp',         phase:4, pos:[0,   -0.70, 1.5 ], flip:false },
   { id:'trt', label:'AG-2G Quad Laser',      phase:5, pos:[0,    1.0, -0.5 ], flip:false },
   { id:'str', label:'CEC Red Accent Stripe', phase:5, pos:[2.0,  0.8,  1.5 ], flip:true  },
 ];
@@ -947,7 +947,7 @@ const CAM_KEYFRAMES = [
   { x: 8,  y: 4,  z: 8,  lx:0,   ly:0.3, lz:1.5 }, // p=0.48  cockpit/sensors
   { x: 3,  y:10,  z: 6,  lx:0,   ly:0,   lz:0   }, // p=0.65  hull top
   { x:-8,  y: 3,  z: 8,  lx:0,   ly:0,   lz:0   }, // p=0.82  port sweep
-  { x:-8,  y: 3,  z: 8,  lx:0,   ly:0,   lz:0   }, // p=1.00  hold
+  { x: 0,  y: 2,  z: 7,  lx:0,   ly:0,   lz:0   }, // p=1.00  centered hero
 ];
 const CAM_STOPS = [0, 0.12, 0.30, 0.48, 0.65, 0.82, 1.0];
 
@@ -1106,17 +1106,30 @@ animate();
 function openModal()  { document.getElementById('modal').classList.add('open'); document.getElementById('modal-bg').classList.add('open'); }
 function closeModal() { document.getElementById('modal').classList.remove('open'); document.getElementById('modal-bg').classList.remove('open'); }
 document.getElementById('specs-btn').onclick = openModal;
-document.addEventListener('keydown', e => { if (e.key==='Escape') { closeModal(); closeDrawer(); } });
+function scrollToPhase(ph) {
+  if (ph === 0) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  const ids = ['', 's1', 's2', 's3', 's4', 's5'];
+  const section = document.getElementById(ids[ph]);
+  if (section) section.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); closeDrawer(); return; }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+    e.preventDefault();
+    scrollToPhase(Math.min(5, activePhase + 1));
+  }
+  if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+    e.preventDefault();
+    scrollToPhase(Math.max(0, activePhase - 1));
+  }
+});
 
 const drawer = document.getElementById('drawer');
 function closeDrawer() { drawer.classList.remove('open'); }
 document.getElementById('nav-btn').onclick = () => drawer.classList.toggle('open');
-drawer.querySelectorAll('.nav-item').forEach(item => {
-  item.addEventListener('click', () => {
-    const t = item.dataset.target;
-    if (t) document.getElementById(t)?.scrollIntoView({ behavior:'smooth', block:'start' });
-    closeDrawer();
-  });
+drawer.querySelectorAll('.nav-item').forEach((item, i) => {
+  item.addEventListener('click', () => { scrollToPhase(i); closeDrawer(); });
 });
 
 function updateNavItems(phase) {
@@ -1124,9 +1137,7 @@ function updateNavItems(phase) {
 }
 
 document.querySelectorAll('.pdot').forEach(dot => {
-  dot.addEventListener('click', () => {
-    document.getElementById('s'+dot.dataset.ph)?.scrollIntoView({ behavior:'smooth', block:'start' });
-  });
+  dot.addEventListener('click', () => scrollToPhase(Number(dot.dataset.ph)));
 });
 function updatePhaseDots(phase) {
   document.querySelectorAll('.pdot').forEach((dot,i) => dot.classList.toggle('on', i+1===phase));
